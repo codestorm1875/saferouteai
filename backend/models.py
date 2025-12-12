@@ -15,6 +15,7 @@ class Incident(Base):
     upvotes = Column(Integer, default=0)
     verified = Column(Boolean, default=False)
     upvoted_by = Column(JSON, default=list)  # List of user IDs who upvoted
+    user_id = Column(String, nullable=True)  # ID of user who reported
 
 class SafetyZone(Base):
     __tablename__ = "safety_zones"

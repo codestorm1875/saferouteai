@@ -76,6 +76,12 @@ export const safetyAPI = {
         return response.data;
     },
 
+    // Get specific user profile
+    getUserProfile: async (userId) => {
+        const response = await api.get(`/user/profile/${userId}`);
+        return response.data;
+    },
+
     // Get nearby incidents
     getNearbyIncidents: async (lat, lng, radiusKm = 2.0, limit = 20) => {
         const response = await api.get(`/incidents/nearby?lat=${lat}&lng=${lng}&radius_km=${radiusKm}&limit=${limit}`);

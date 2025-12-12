@@ -37,10 +37,31 @@ const SettingsScreen = () => {
         safetyAPI.createOrUpdateProfile(userId, username).catch(console.error);
     }, []);
 
-    const loadData = () => {
+    const loadData = async () => {
         setSavedLocations(getSavedLocations());
         setPreferences(getUserPreferences());
-        setStats(getProfileStats());
+
+        // Fetch real stats from backend
+        try {
+            // First ensure profile exists
+            await safetyAPI.createOrUpdateProfile(userId, username);
+
+            // Get my specific profile stats
+            const myProfile = await safetyAPI.getUserProfile(userId);
+
+            if (myProfile) {
+                setStats({
+                    incidentsReported: myProfile.total_reports,
+                    routesCalculated: getProfileStats().routesCalculated, // Keep local
+                    savedLocationsCount: savedLocations.length
+                });
+            } else {
+                setStats(getProfileStats());
+            }
+        } catch (error) {
+            console.error('Error syncing profile:', error);
+            setStats(getProfileStats());
+        }
     };
 
     const loadLeaderboard = async () => {

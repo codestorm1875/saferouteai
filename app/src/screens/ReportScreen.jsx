@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, MapPin, Send } from 'lucide-react';
 import { safetyAPI } from '../services/api';
-import { incrementStat } from '../utils/storage';
+import { incrementStat, getUserId } from '../utils/storage';
 import notificationService from '../services/notificationService';
 
 const ReportScreen = () => {
@@ -48,6 +48,7 @@ const ReportScreen = () => {
                 latitude: parseFloat(latitude),
                 longitude: parseFloat(longitude),
                 severity,
+                user_id: getUserId(),
             });
 
             setSuccess(true);

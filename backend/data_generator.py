@@ -110,13 +110,15 @@ def generate_incidents(db):
             weights=[i["weight"] for i in INCIDENT_TYPES]
         )[0]
         
-        # Generate timestamp (last 7 days, weighted towards recent)
-        hours_ago = random.choices(
-            range(0, 168),  # 7 days = 168 hours
-            weights=[100/(i+1) for i in range(168)]  # Recent incidents more likely
-        )[0]
-        
-        timestamp = datetime.now() - timedelta(hours=hours_ago)
+        # Generate timestamp
+        # 20% chance of being very recent (0-60 mins ago)
+        # 80% chance of being in last 7 days
+        if random.random() < 0.2:
+            minutes_ago = random.randint(1, 60)
+            timestamp = datetime.utcnow() - timedelta(minutes=minutes_ago)
+        else:
+            hours_ago = random.randint(1, 168)
+            timestamp = datetime.utcnow() - timedelta(hours=hours_ago)
         
         # Add small random offset to coordinates
         lat_offset = random.uniform(-0.005, 0.005)

@@ -20,12 +20,16 @@ from schemas import (
 from safety_engine import SafetyScoreEngine
 from data_generator import generate_all_data
 from ml_engine import MLEngine
+from simulation import SimulationService
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
 # Initialize ML Engine
 ml_engine = MLEngine()
+
+# Initialize Simulation Service
+simulation_service = SimulationService()
 
 # API metadata for Swagger documentation
 app = FastAPI(
@@ -122,6 +126,13 @@ async def startup_event():
     else:
         print(f"✅ Database already has {existing_zones} zones")
         db.close()
+        
+    # Start simulation automatically
+    simulation_service.start()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    simulation_service.stop()
 
 @app.get(
     "/",
@@ -285,10 +296,35 @@ async def report_incident(
         latitude=incident.latitude,
         longitude=incident.longitude,
         severity=incident.severity,
-        timestamp=datetime.utcnow()
+        timestamp=datetime.utcnow(),
+        user_id=incident.user_id
     )
     
     db.add(db_incident)
+    
+    # Update reporter's reputation (+10 points)
+    if incident.user_id:
+        reporter = db.query(UserProfile).filter(UserProfile.user_id == incident.user_id).first()
+        if reporter:
+            reporter.total_reports += 1
+            reporter.reputation_score += 10
+            
+            # Check for badges
+            if reporter.total_reports >= 5 and "Reporter" not in (reporter.badges or []):
+                badges = reporter.badges or []
+                badges.append("Reporter")
+                reporter.badges = badges
+        else:
+            # Create profile if not exists
+            new_reporter = UserProfile(
+                user_id=incident.user_id,
+                username=f"User_{incident.user_id[:6]}",
+                total_reports=1,
+                reputation_score=10,
+                badges=[]
+            )
+            db.add(new_reporter)
+    
     db.commit()
     db.refresh(db_incident)
     
@@ -693,6 +729,19 @@ async def upvote_incident(
     if incident.upvotes >= 3:
         incident.verified = True
     
+    # Update author's reputation (+5 points)
+    if incident.user_id:
+        author = db.query(UserProfile).filter(UserProfile.user_id == incident.user_id).first()
+        if author:
+            author.total_upvotes_received += 1
+            author.reputation_score += 5
+            
+            # Check for badges
+            if author.total_upvotes_received >= 10 and "Trusted" not in (author.badges or []):
+                badges = author.badges or []
+                badges.append("Trusted")
+                author.badges = badges
+    
     db.commit()
     db.refresh(incident)
     
@@ -790,6 +839,33 @@ async def create_or_update_profile(
     db.refresh(new_profile)
     
     return new_profile
+
+@app.get(
+    "/user/profile/{user_id}",
+    response_model=UserProfileResponse,
+    tags=["Community"],
+    summary="Get User Profile",
+    description="Get profile stats for a specific user"
+)
+async def get_user_profile(
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Get user profile by ID.
+    """
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+    if not profile:
+        # Return empty profile if not found
+        return UserProfile(
+            user_id=user_id,
+            username="User",
+            total_reports=0,
+            total_upvotes_received=0,
+            reputation_score=0,
+            badges=[]
+        )
+    return profile
 
 @app.get(
     "/incidents/nearby",
@@ -908,34 +984,47 @@ async def get_ml_insights(db: Session = Depends(get_db)):
     - Trend Analysis
     """
     return ml_engine.get_comprehensive_insights(db)
+
+@app.post(
+    "/simulation/start",
+    tags=["Simulation"],
+    summary="Start Simulation",
+    description="Start the background incident simulation service"
+)
+async def start_simulation():
+    simulation_service.start()
+    return {"status": "started", "message": "Real-time simulation started"}
+
+@app.post(
+    "/simulation/stop",
+    tags=["Simulation"],
+    summary="Stop Simulation",
+    description="Stop the background incident simulation service"
+)
+async def stop_simulation():
+    simulation_service.stop()
+    return {"status": "stopped", "message": "Real-time simulation stopped"}
+
+@app.post(
+    "/simulation/trigger",
+    tags=["Simulation"],
+    summary="Trigger Incident",
+    description="Force a simulated incident to happen immediately"
+)
+async def trigger_simulation_incident():
+    incident = simulation_service.trigger_incident()
+    if incident:
+        return {
+            "status": "success", 
+            "message": "Incident triggered",
+            "incident": {
+                "type": incident.type,
+                "location": f"{incident.latitude}, {incident.longitude}",
+                "severity": incident.severity
+            }
+        }
+    return {"status": "error", "message": "Could not trigger incident"}
     
-    **Query Parameters:**
-    - lat: Latitude
-    - lng: Longitude
-    - radius_km: Search radius in kilometers (default: 2.0)
-    - limit: Maximum incidents to return (default: 20)
-    
-    Returns incidents ordered by most recent first.
-    """
-    from safety_engine import SafetyScoreEngine
-    
-    # Get all recent incidents
-    all_incidents = db.query(Incident).order_by(
-        Incident.timestamp.desc()
-    ).limit(100).all()
-    
-    # Filter by distance
-    nearby = []
-    for incident in all_incidents:
-        distance = SafetyScoreEngine.haversine_distance(
-            lat, lng, incident.latitude, incident.longitude
-        )
-        if distance <= radius_km:
-            nearby.append(incident)
-            if len(nearby) >= limit:
-                break
-    
-    return nearby
 
 if __name__ == "__main__":
     import uvicorn

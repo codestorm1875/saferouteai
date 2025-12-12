@@ -61,7 +61,9 @@ const FeedScreen = () => {
     };
 
     const formatTime = (timestamp) => {
-        const date = new Date(timestamp);
+        // Ensure timestamp is treated as UTC
+        const dateStr = timestamp.endsWith('Z') ? timestamp : `${timestamp}Z`;
+        const date = new Date(dateStr);
         const now = new Date();
         const diffMs = now - date;
         const diffMins = Math.floor(diffMs / 60000);

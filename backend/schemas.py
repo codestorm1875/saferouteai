@@ -8,6 +8,7 @@ class IncidentCreate(BaseModel):
     latitude: float
     longitude: float
     severity: Optional[str] = "medium"
+    user_id: Optional[str] = None
 
 class IncidentResponse(BaseModel):
     id: int
