@@ -146,9 +146,9 @@ h6 {
 /* Phone Frame - Cyberpunk Edition */
 .phone-frame {
   width: 100%;
-  max-width: 420px;
-  height: 95vh;
-  max-height: 900px;
+  max-width: 450px;
+  height: 100vh;
+  max-height: 1000px;
   background: #0f172a;
   border-radius: 50px;
   padding: 12px;
