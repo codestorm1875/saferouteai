@@ -18,12 +18,12 @@ const Leaderboard = ({ leaderboard, currentUserId }) => {
 
     if (!leaderboard || leaderboard.length === 0) {
         return (
-            <div className="card" style={{
+            <div className="glass-panel" style={{
                 textAlign: 'center',
                 padding: 'var(--space-xl)',
                 color: 'var(--text-secondary)',
             }}>
-                <Award size={32} style={{ margin: '0 auto var(--space-sm)' }} />
+                <Award size={32} style={{ margin: '0 auto var(--space-sm)', opacity: 0.5 }} />
                 <p style={{ margin: 0, fontSize: '13px' }}>
                     No leaderboard data yet
                 </p>
@@ -40,15 +40,17 @@ const Leaderboard = ({ leaderboard, currentUserId }) => {
             {leaderboard.map((entry) => {
                 const isCurrentUser = entry.user_id === currentUserId;
                 const rankIcon = getRankIcon(entry.rank);
+                const rankColor = getRankColor(entry.rank);
 
                 return (
                     <div
                         key={entry.user_id}
-                        className="card"
+                        className="glass-panel"
                         style={{
                             padding: 'var(--space-md)',
-                            background: isCurrentUser ? 'var(--primary)15' : 'var(--card-bg)',
-                            border: isCurrentUser ? '2px solid var(--primary)' : '1.5px solid var(--border)',
+                            background: isCurrentUser ? 'rgba(16, 185, 129, 0.1)' : 'var(--bg-glass)',
+                            border: isCurrentUser ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--bg-glass-border)',
+                            boxShadow: isCurrentUser ? '0 0 15px rgba(16, 185, 129, 0.1)' : 'none',
                         }}
                     >
                         <div style={{
@@ -61,17 +63,20 @@ const Leaderboard = ({ leaderboard, currentUserId }) => {
                                 width: '40px',
                                 height: '40px',
                                 borderRadius: 'var(--radius-md)',
-                                background: entry.rank <= 3 ? `${getRankColor(entry.rank)}20` : 'var(--border)',
+                                background: entry.rank <= 3 ? `${rankColor}20` : 'rgba(255, 255, 255, 0.05)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 flexShrink: 0,
+                                border: entry.rank <= 3 ? `1px solid ${rankColor}40` : 'none',
+                                boxShadow: entry.rank <= 3 ? `0 0 10px ${rankColor}20` : 'none',
                             }}>
                                 {rankIcon || (
                                     <span style={{
                                         fontSize: '16px',
                                         fontWeight: '700',
                                         color: 'var(--text-primary)',
+                                        fontFamily: 'Outfit, sans-serif'
                                     }}>
                                         {entry.rank}
                                     </span>
@@ -94,6 +99,7 @@ const Leaderboard = ({ leaderboard, currentUserId }) => {
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
+                                        fontFamily: 'Outfit, sans-serif'
                                     }}>
                                         {entry.username}
                                     </h3>
@@ -102,9 +108,10 @@ const Leaderboard = ({ leaderboard, currentUserId }) => {
                                             fontSize: '10px',
                                             fontWeight: '600',
                                             color: 'var(--primary)',
-                                            background: 'var(--primary)20',
+                                            background: 'rgba(16, 185, 129, 0.2)',
                                             padding: '2px 6px',
                                             borderRadius: 'var(--radius-sm)',
+                                            border: '1px solid rgba(16, 185, 129, 0.3)'
                                         }}>
                                             YOU
                                         </span>
@@ -115,7 +122,7 @@ const Leaderboard = ({ leaderboard, currentUserId }) => {
                                     display: 'flex',
                                     gap: 'var(--space-md)',
                                     fontSize: '12px',
-                                    color: 'var(--text-secondary)',
+                                    color: 'var(--text-muted)',
                                 }}>
                                     <span>📊 {entry.total_reports} reports</span>
                                     <span>👍 {entry.total_upvotes_received} upvotes</span>
@@ -130,13 +137,15 @@ const Leaderboard = ({ leaderboard, currentUserId }) => {
                                 <div style={{
                                     fontSize: '20px',
                                     fontWeight: '700',
-                                    color: getRankColor(entry.rank),
+                                    color: rankColor,
+                                    textShadow: `0 0 10px ${rankColor}40`,
+                                    fontFamily: 'Outfit, sans-serif'
                                 }}>
                                     {entry.reputation_score}
                                 </div>
                                 <div style={{
                                     fontSize: '10px',
-                                    color: 'var(--text-secondary)',
+                                    color: 'var(--text-muted)',
                                     marginTop: '2px',
                                 }}>
                                     points
@@ -159,9 +168,10 @@ const Leaderboard = ({ leaderboard, currentUserId }) => {
                                             fontSize: '10px',
                                             fontWeight: '600',
                                             color: 'var(--primary)',
-                                            background: 'var(--primary)15',
+                                            background: 'rgba(16, 185, 129, 0.1)',
                                             padding: '2px 6px',
                                             borderRadius: 'var(--radius-sm)',
+                                            border: '1px solid rgba(16, 185, 129, 0.2)'
                                         }}
                                     >
                                         {badge}

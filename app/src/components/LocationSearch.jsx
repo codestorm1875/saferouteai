@@ -2,34 +2,47 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, X } from 'lucide-react';
 import { searchLocations } from '../data/lagosLocations';
 
-const LocationSearch = ({ onLocationSelect, placeholder = "Search location...", initialValue = "" }) => {
+const LocationSearch = ({
+    onLocationSelect,
+    placeholder = "Search location...",
+    initialValue = "",
+    inputStyle = {},
+    onFocus,
+    onBlur
+}) => {
     const [query, setQuery] = useState(initialValue);
     const [predictions, setPredictions] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const inputRef = useRef(null);
+    const isSelectionRef = useRef(false);
 
     useEffect(() => {
+        if (isSelectionRef.current) {
+            isSelectionRef.current = false;
+            return;
+        }
+
         if (!query || query.length < 2) {
             setPredictions([]);
             setShowDropdown(false);
             return;
         }
 
-        // Simulate API delay for realistic feel
         const timeoutId = setTimeout(() => {
             const results = searchLocations(query);
             setPredictions(results);
             setShowDropdown(results.length > 0);
-        }, 200); // 200ms delay to simulate network request
+        }, 200);
 
         return () => clearTimeout(timeoutId);
     }, [query]);
 
     const handleSelectPrediction = (prediction) => {
+        isSelectionRef.current = true;
         setQuery(prediction.description);
         setShowDropdown(false);
+        if (onBlur) onBlur();
 
-        // Call the parent callback with location data
         onLocationSelect({
             name: prediction.description,
             lat: prediction.lat,
@@ -47,41 +60,55 @@ const LocationSearch = ({ onLocationSelect, placeholder = "Search location...", 
     };
 
     return (
-        <div className="search-autocomplete">
+        <div className="search-autocomplete" style={{ width: '100%' }}>
             <div style={{ position: 'relative' }}>
+                {/* ... (Search icon remains same) */}
                 <Search
                     size={20}
                     style={{
                         position: 'absolute',
-                        left: 'var(--space-lg)',
+                        left: '16px',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        color: 'var(--text-muted)',
+                        color: inputStyle.color || 'var(--text-muted)',
                         zIndex: 1
                     }}
                 />
                 <input
                     ref={inputRef}
                     type="text"
-                    className="form-control"
+                    className="input-glass"
                     placeholder={placeholder}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => predictions.length > 0 && setShowDropdown(true)}
-                    style={{ paddingLeft: '48px', paddingRight: query ? '48px' : '16px' }}
+                    onFocus={() => {
+                        if (predictions.length > 0) setShowDropdown(true);
+                        if (onFocus) onFocus();
+                    }}
+                    onBlur={() => {
+                        // Delay blur to allow click on dropdown items
+                        setTimeout(() => {
+                            if (onBlur) onBlur();
+                        }, 200);
+                    }}
+                    style={{
+                        paddingLeft: '40px',
+                        paddingRight: query ? '40px' : '16px',
+                        ...inputStyle
+                    }}
                 />
                 {query && (
                     <button
                         onClick={handleClear}
                         style={{
                             position: 'absolute',
-                            right: 'var(--space-lg)',
+                            right: '16px',
                             top: '50%',
                             transform: 'translateY(-50%)',
                             background: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            color: 'var(--text-muted)',
+                            color: inputStyle.color || 'var(--text-muted)',
                             padding: '4px',
                             display: 'flex',
                             alignItems: 'center',
@@ -110,19 +137,6 @@ const LocationSearch = ({ onLocationSelect, placeholder = "Search location...", 
                             </div>
                         </div>
                     ))}
-                </div>
-            )}
-
-            {query.length >= 2 && predictions.length === 0 && (
-                <div className="autocomplete-dropdown">
-                    <div className="autocomplete-item" style={{ cursor: 'default', opacity: 0.7 }}>
-                        <div className="autocomplete-item-main">
-                            No locations found
-                        </div>
-                        <div className="autocomplete-item-secondary">
-                            Try: Surulere, Ikoyi, Lekki, Yaba, etc.
-                        </div>
-                    </div>
                 </div>
             )}
         </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
-import { Navigation, TrendingUp, Shield, MapPin, Settings, Share2 } from 'lucide-react';
+import { Navigation, TrendingUp, Shield, MapPin, Settings, Share2, ArrowRightLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { safetyAPI } from '../services/api';
 import LocationSearch from '../components/LocationSearch';
@@ -72,224 +72,238 @@ const SafeRouteScreen = () => {
 
     return (
         <div className="screen">
-            <div className="screen-header">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                        <h1>Safe Route</h1>
-                        <p>Compare routes by safety</p>
+            {/* Header */}
+            <div className="status-bar glass-panel" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                gap: '12px'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                    <Navigation 
+                        size={48} 
+                        style={{ 
+                            color: '#10b981',
+                            filter: 'drop-shadow(0 0 12px rgba(16, 185, 129, 0.6))'
+                        }} 
+                    />
+                    <div style={{ flex: 1 }}>
+                        <h1 style={{ 
+                            fontSize: '24px', 
+                            margin: 0,
+                            fontFamily: 'Outfit, sans-serif',
+                            fontWeight: '800',
+                            letterSpacing: '0.5px'
+                        }}>Safe Route</h1>
+                        <p style={{ 
+                            color: 'var(--text-muted)', 
+                            fontSize: '13px', 
+                            margin: 0,
+                            fontFamily: 'Inter, sans-serif'
+                        }}>AI-Powered Pathfinding</p>
                     </div>
-                    <button
-                        onClick={() => navigate('/settings')}
-                        style={{
-                            background: 'var(--card-bg)',
-                            border: '1.5px solid var(--border)',
-                            borderRadius: 'var(--radius-md)',
-                            padding: '8px 12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            color: 'var(--text-secondary)',
-                            fontWeight: '600',
-                        }}
-                    >
-                        <Settings size={14} />
-                        {preferences.riskTolerance.charAt(0).toUpperCase() + preferences.riskTolerance.slice(1)}
-                    </button>
                 </div>
+                <button
+                    onClick={() => navigate('/settings')}
+                    style={{
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        borderRadius: '12px',
+                        padding: '8px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        color: '#10b981',
+                        fontWeight: '700',
+                        fontFamily: 'Outfit, sans-serif',
+                        boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)',
+                        transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = '0 0 25px rgba(16, 185, 129, 0.4)';
+                        e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.2)';
+                        e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)';
+                    }}
+                >
+                    <Settings size={16} />
+                    {preferences.riskTolerance.charAt(0).toUpperCase() + preferences.riskTolerance.slice(1)}
+                </button>
             </div>
 
-            <div className="screen-content">
-                {/* Start Location */}
-                <div className="form-group">
-                    <label>
-                        <MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />
-                        Start Location
-                    </label>
-                    <LocationSearch
-                        onLocationSelect={handleStartLocationSelect}
-                        placeholder="Search start location..."
-                        initialValue={startLocation?.name || ''}
-                    />
-                    {startLocation && (
-                        <div style={{
-                            marginTop: 'var(--space-sm)',
-                            fontSize: '13px',
-                            color: 'var(--text-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 'var(--space-sm)'
-                        }}>
-                            <div style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: 'var(--primary)',
-                                boxShadow: '0 0 8px rgba(16, 185, 129, 0.4)'
-                            }}></div>
-                            {startLocation.name}
-                        </div>
-                    )}
-                </div>
+            <div className="screen-content" style={{ paddingTop: '100px', marginTop: '12px' }}>
+                {/* Route Input Card */}
+                <div className="glass-panel" style={{ 
+                    padding: '24px', 
+                    borderRadius: '24px', 
+                    marginBottom: '24px',
+                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                    boxShadow: '0 0 30px rgba(16, 185, 129, 0.1)'
+                }}>
 
-                {/* Swap Button */}
-                {startLocation && endLocation && (
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        marginBottom: 'var(--space-lg)',
-                        marginTop: '-var(--space-md)'
-                    }}>
+                    {/* Start */}
+                    <div style={{ position: 'relative', marginBottom: '20px' }}>
+                        <div style={{ 
+                            position: 'absolute', 
+                            left: '0', 
+                            top: '12px', 
+                            width: '14px', 
+                            height: '14px', 
+                            borderRadius: '50%', 
+                            background: '#10b981', 
+                            boxShadow: '0 0 16px rgba(16,185,129,0.8)',
+                            border: '2px solid rgba(16, 185, 129, 0.3)'
+                        }}></div>
+                        <div style={{ marginLeft: '28px' }}>
+                            <label style={{ 
+                                fontSize: '11px', 
+                                color: '#10b981', 
+                                display: 'block', 
+                                marginBottom: '6px',
+                                fontWeight: '700',
+                                letterSpacing: '0.5px',
+                                fontFamily: 'Outfit, sans-serif'
+                            }}>START POINT</label>
+                            <LocationSearch
+                                onLocationSelect={handleStartLocationSelect}
+                                placeholder="Current Location"
+                                initialValue={startLocation?.name || ''}
+                                inputStyle={{ background: 'rgba(0,0,0,0.3)', border: 'none' }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Connector Line */}
+                    <div style={{ 
+                        position: 'absolute', 
+                        left: '30px', 
+                        top: '55px', 
+                        width: '3px', 
+                        height: '90px', 
+                        background: 'linear-gradient(to bottom, rgba(16, 185, 129, 0.8), rgba(239, 68, 68, 0.8))',
+                        borderRadius: '2px',
+                        boxShadow: '0 0 8px rgba(16, 185, 129, 0.4)'
+                    }}></div>
+
+                    {/* Swap Button */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0px', marginBottom: '-20px', position: 'relative', zIndex: 10, paddingRight: '10px' }}>
                         <button
                             onClick={swapLocations}
                             style={{
-                                background: 'var(--bg-card)',
-                                border: '1.5px solid var(--border)',
-                                borderRadius: 'var(--radius-full)',
-                                width: '40px',
-                                height: '40px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                transition: 'all 0.3s',
-                                color: 'var(--text-secondary)'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--primary)';
-                                e.currentTarget.style.color = 'var(--primary)';
-                                e.currentTarget.style.transform = 'rotate(180deg)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.borderColor = 'var(--border)';
-                                e.currentTarget.style.color = 'var(--text-secondary)';
-                                e.currentTarget.style.transform = 'rotate(0deg)';
+                                background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)',
+                                width: '36px', height: '36px', borderRadius: '50%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', color: '#94a3b8'
                             }}
                         >
-                            ⇅
+                            <ArrowRightLeft size={16} />
                         </button>
                     </div>
-                )}
 
-                {/* End Location */}
-                <div className="form-group">
-                    <label>
-                        <MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />
-                        Destination
-                    </label>
-                    <LocationSearch
-                        onLocationSelect={handleEndLocationSelect}
-                        placeholder="Search destination..."
-                        initialValue={endLocation?.name || ''}
-                    />
-                    {endLocation && (
-                        <div style={{
-                            marginTop: 'var(--space-sm)',
-                            fontSize: '13px',
-                            color: 'var(--text-muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 'var(--space-sm)'
-                        }}>
-                            <div style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: 'var(--danger)',
-                                boxShadow: '0 0 8px rgba(239, 68, 68, 0.4)'
-                            }}></div>
-                            {endLocation.name}
+                    {/* End */}
+                    <div style={{ position: 'relative', marginTop: '20px' }}>
+                        <div style={{ 
+                            position: 'absolute', 
+                            left: '0', 
+                            top: '12px', 
+                            width: '14px', 
+                            height: '14px', 
+                            borderRadius: '50%', 
+                            background: '#ef4444', 
+                            boxShadow: '0 0 16px rgba(239,68,68,0.8)',
+                            border: '2px solid rgba(239, 68, 68, 0.3)'
+                        }}></div>
+                        <div style={{ marginLeft: '28px' }}>
+                            <label style={{ 
+                                fontSize: '11px', 
+                                color: '#ef4444', 
+                                display: 'block', 
+                                marginBottom: '6px',
+                                fontWeight: '700',
+                                letterSpacing: '0.5px',
+                                fontFamily: 'Outfit, sans-serif'
+                            }}>DESTINATION</label>
+                            <LocationSearch
+                                onLocationSelect={handleEndLocationSelect}
+                                placeholder="Where to?"
+                                initialValue={endLocation?.name || ''}
+                                inputStyle={{ background: 'rgba(0,0,0,0.3)', border: 'none' }}
+                            />
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 <button
                     className="btn btn-primary"
                     onClick={calculateRoute}
                     disabled={loading || !startLocation || !endLocation}
-                    style={{ width: '100%', marginBottom: 'var(--space-xl)' }}
+                    style={{ 
+                        width: '100%', 
+                        marginBottom: '32px', 
+                        height: '64px', 
+                        fontSize: '16px',
+                        fontWeight: '800',
+                        letterSpacing: '1px',
+                        fontFamily: 'Outfit, sans-serif',
+                        background: loading || !startLocation || !endLocation 
+                            ? 'rgba(100, 100, 100, 0.2)'
+                            : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        boxShadow: loading || !startLocation || !endLocation
+                            ? 'none'
+                            : '0 0 30px rgba(16, 185, 129, 0.5)',
+                        transition: 'all 0.3s ease'
+                    }}
                 >
-                    <Navigation size={20} />
-                    {loading ? 'Calculating...' : 'Find Safe Route'}
+                    {loading ? (
+                        <span className="loading-dots">Calculating...</span>
+                    ) : (
+                        <>
+                            <Navigation size={24} />
+                            CALCULATE SAFE ROUTE
+                        </>
+                    )}
                 </button>
 
                 {routeData && (
-                    <>
-                        <div style={{ marginBottom: 'var(--space-lg)', display: 'flex', gap: 'var(--space-md)' }}>
-                            <div className="card" style={{ flex: 1, padding: 'var(--space-lg)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
-                                    <Shield size={20} style={{ color: 'var(--primary)' }} />
-                                    <strong style={{ color: 'var(--primary)' }}>Safe Route</strong>
+                    <div className="animate-fade-in">
+                        {/* Comparison Cards */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                            {/* Safe Route Card */}
+                            <div className={`glass-panel ${routeData.recommendation === 'safe' ? 'glow-border-green' : ''}`} style={{ padding: '16px', borderRadius: '20px', position: 'relative', overflow: 'hidden' }}>
+                                {routeData.recommendation === 'safe' && <div style={{ position: 'absolute', top: 0, right: 0, background: '#10b981', fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '0 0 0 10px' }}>RECOMMENDED</div>}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                    <Shield size={18} color="#10b981" />
+                                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#10b981' }}>SAFE</span>
                                 </div>
-                                <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                    {routeData.safe_score.toFixed(1)}
-                                </div>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>Safety Score</div>
+                                <div style={{ fontSize: '32px', fontWeight: '800', color: '#fff' }}>{routeData.safe_score.toFixed(0)}</div>
+                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Safety Score</div>
                             </div>
 
-                            <div className="card" style={{ flex: 1, padding: 'var(--space-lg)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
-                                    <TrendingUp size={20} style={{ color: 'var(--warning)' }} />
-                                    <strong style={{ color: 'var(--warning)' }}>Fast Route</strong>
+                            {/* Fast Route Card */}
+                            <div className={`glass-panel ${routeData.recommendation === 'fast' ? 'glow-border-amber' : ''}`} style={{ padding: '16px', borderRadius: '20px', position: 'relative', overflow: 'hidden' }}>
+                                {routeData.recommendation === 'fast' && <div style={{ position: 'absolute', top: 0, right: 0, background: '#f59e0b', fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '0 0 0 10px' }}>RECOMMENDED</div>}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                    <TrendingUp size={18} color="#f59e0b" />
+                                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#f59e0b' }}>FAST</span>
                                 </div>
-                                <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                    {routeData.fast_score.toFixed(1)}
-                                </div>
-                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>Safety Score</div>
-                            </div>
-                        </div>
-
-                        <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                            <div className="card-body">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
-                                    <div style={{
-                                        width: '32px',
-                                        height: '32px',
-                                        borderRadius: 'var(--radius-md)',
-                                        background: routeData.recommendation === 'safe' ? 'var(--primary)' :
-                                            routeData.recommendation === 'fast' ? 'var(--warning)' : 'var(--info)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '18px'
-                                    }}>
-                                        {routeData.recommendation === 'safe' ? '🛡️' :
-                                            routeData.recommendation === 'fast' ? '⚡' : '👍'}
-                                    </div>
-                                    <strong style={{ color: 'var(--text-primary)' }}>Recommendation</strong>
-                                </div>
-                                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                                    {routeData.recommendation === 'safe' && 'Take the safe route for better security. The extra time is worth your safety.'}
-                                    {routeData.recommendation === 'fast' && 'Fast route is reasonably safe. You can take either route.'}
-                                    {routeData.recommendation === 'either' && 'Both routes have similar safety levels. Choose based on your preference.'}
-                                </p>
+                                <div style={{ fontSize: '32px', fontWeight: '800', color: '#fff' }}>{routeData.fast_score.toFixed(0)}</div>
+                                <div style={{ fontSize: '12px', color: '#94a3b8' }}>Safety Score</div>
                             </div>
                         </div>
 
-                        {/* Share Button */}
-                        <button
-                            className="btn btn-secondary"
-                            onClick={() => setShowShareModal(true)}
-                            style={{
-                                width: '100%',
-                                marginBottom: 'var(--space-lg)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 'var(--space-sm)',
-                            }}
-                        >
-                            <Share2 size={18} />
-                            Share Route
-                        </button>
-
+                        {/* Map Preview */}
                         <div style={{
-                            height: '350px',
-                            borderRadius: 'var(--radius-lg)',
+                            height: '300px',
+                            borderRadius: '24px',
                             overflow: 'hidden',
-                            border: '1.5px solid var(--border)',
-                            boxShadow: 'var(--shadow-lg)'
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            marginBottom: '24px',
+                            position: 'relative'
                         }}>
                             <MapContainer
                                 center={LAGOS_CENTER}
@@ -297,61 +311,45 @@ const SafeRouteScreen = () => {
                                 style={{ height: '100%', width: '100%' }}
                                 zoomControl={false}
                             >
-                                <TileLayer
-                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                />
+                                <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
                                 <Polyline
                                     positions={routeData.safe_route.map(p => [p.lat, p.lng])}
-                                    pathOptions={{ color: '#10b981', weight: 5, opacity: 0.8 }}
+                                    pathOptions={{ color: '#10b981', weight: 6, opacity: 0.9 }}
                                 />
                                 <Polyline
                                     positions={routeData.fast_route.map(p => [p.lat, p.lng])}
-                                    pathOptions={{ color: '#f59e0b', weight: 5, dashArray: '10, 10', opacity: 0.8 }}
+                                    pathOptions={{ color: '#f59e0b', weight: 4, dashArray: '10, 10', opacity: 0.6 }}
                                 />
                                 <Marker position={[startLocation.lat, startLocation.lng]}>
-                                    <Popup>
-                                        <div style={{ color: '#0f172a', padding: '4px' }}>
-                                            <strong>Start</strong>
-                                            <br />
-                                            {startLocation.name}
-                                        </div>
-                                    </Popup>
+                                    <Popup>Start</Popup>
                                 </Marker>
                                 <Marker position={[endLocation.lat, endLocation.lng]}>
-                                    <Popup>
-                                        <div style={{ color: '#0f172a', padding: '4px' }}>
-                                            <strong>Destination</strong>
-                                            <br />
-                                            {endLocation.name}
-                                        </div>
-                                    </Popup>
+                                    <Popup>End</Popup>
                                 </Marker>
                             </MapContainer>
+
+                            {/* Legend Overlay */}
+                            <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', padding: '8px 16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', zIndex: 1000 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div style={{ width: '12px', height: '4px', background: '#10b981', borderRadius: '2px' }}></div>
+                                    <span style={{ fontSize: '12px', color: '#fff' }}>Safe</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <div style={{ width: '12px', height: '4px', background: '#f59e0b', borderRadius: '2px', borderStyle: 'dashed' }}></div>
+                                    <span style={{ fontSize: '12px', color: '#fff' }}>Fast</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div style={{
-                            marginTop: 'var(--space-lg)',
-                            display: 'flex',
-                            gap: 'var(--space-md)',
-                            fontSize: '13px',
-                            justifyContent: 'center'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <div style={{ width: '20px', height: '3px', background: '#10b981', borderRadius: '2px' }}></div>
-                                <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Safe Route</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <div style={{
-                                    width: '20px',
-                                    height: '3px',
-                                    background: '#f59e0b',
-                                    borderRadius: '2px',
-                                    backgroundImage: 'repeating-linear-gradient(90deg, #f59e0b, #f59e0b 5px, transparent 5px, transparent 10px)'
-                                }}></div>
-                                <span style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Fast Route</span>
-                            </div>
-                        </div>
-                    </>
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => setShowShareModal(true)}
+                            style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                        >
+                            <Share2 size={18} />
+                            Share Route with Friends
+                        </button>
+                    </div>
                 )}
             </div>
 

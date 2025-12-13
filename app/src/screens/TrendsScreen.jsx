@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, BarChart3, Search } from 'lucide-react';
 import { safetyAPI } from '../services/api';
 import SafetyTrendsChart from '../components/SafetyTrendsChart';
 
@@ -72,21 +72,18 @@ const TrendsScreen = () => {
 
     return (
         <div className="screen">
-            <div className="screen-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                    <BarChart3 size={24} color="var(--primary)" />
-                    <h1>Safety Trends</h1>
-                </div>
-                <p>7-day historical safety data</p>
+            <div className="status-bar glass-panel" style={{ top: '20px', height: 'auto', padding: '16px 24px', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                <h1 style={{ fontSize: '24px', margin: 0 }}>Safety Trends</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>Historical data analysis</p>
             </div>
 
-            <div className="screen-content">
+            <div className="screen-content" style={{ paddingTop: '120px' }}>
                 {/* Search Zone */}
-                <div className="form-group">
-                    <label>Search Location</label>
+                <div className="glass-panel" style={{ padding: '8px 16px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                    <Search size={20} color="var(--text-muted)" />
                     <input
                         type="text"
-                        className="input"
+                        style={{ background: 'transparent', border: 'none', color: 'white', width: '100%', padding: '8px 0', fontSize: '16px', outline: 'none' }}
                         placeholder="Search for a zone..."
                         value={searchQuery}
                         onChange={(e) => handleSearch(e.target.value)}
@@ -96,129 +93,68 @@ const TrendsScreen = () => {
                 {loading ? (
                     <div className="loading">Loading trends...</div>
                 ) : trendData ? (
-                    <>
-                        {/* Zone Info */}
-                        <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
-                            <h3 style={{
-                                fontSize: '18px',
-                                fontWeight: '600',
-                                color: 'var(--text-primary)',
-                                marginBottom: 'var(--space-sm)',
-                            }}>
-                                {trendData.zone_name}
-                            </h3>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                color: getTrendColor(),
-                            }}>
-                                <TrendIcon size={20} />
-                                <span style={{ fontSize: '14px', fontWeight: '600', textTransform: 'capitalize' }}>
-                                    {trendData.trend_direction}
-                                </span>
+                    <div className="animate-fade-in">
+                        {/* Zone Info Card */}
+                        <div className="glass-panel" style={{ padding: '24px', borderRadius: '24px', marginBottom: '24px', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                                <div>
+                                    <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px' }}>{trendData.zone_name}</h2>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: getTrendColor() }}>
+                                        <TrendIcon size={16} />
+                                        <span style={{ fontSize: '14px', fontWeight: '600', textTransform: 'capitalize' }}>{trendData.trend_direction} Trend</span>
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: '32px', fontWeight: '800', color: 'var(--primary)' }}>{trendData.average_score.toFixed(0)}</div>
+                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>AVG SCORE</div>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Chart */}
-                        <div className="card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
                             <SafetyTrendsChart
                                 trends={trendData.trends}
                                 zoneName={trendData.zone_name}
                             />
                         </div>
 
-                        {/* Statistics */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(3, 1fr)',
-                            gap: 'var(--space-md)',
-                        }}>
-                            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
-                                <div style={{
-                                    fontSize: '24px',
-                                    fontWeight: '700',
-                                    color: 'var(--primary)',
-                                    marginBottom: '4px',
-                                }}>
-                                    {trendData.average_score.toFixed(1)}
-                                </div>
-                                <div style={{
-                                    fontSize: '12px',
-                                    color: 'var(--text-secondary)',
-                                    fontWeight: '600',
-                                }}>
-                                    Average
-                                </div>
+                        {/* Stats Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                            <div className="glass-panel" style={{ padding: '20px', borderRadius: '20px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '24px', fontWeight: '800', color: '#10b981', marginBottom: '4px' }}>{trendData.max_score.toFixed(0)}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600' }}>PEAK SCORE</div>
                             </div>
-
-                            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
-                                <div style={{
-                                    fontSize: '24px',
-                                    fontWeight: '700',
-                                    color: '#10b981',
-                                    marginBottom: '4px',
-                                }}>
-                                    {trendData.max_score.toFixed(1)}
-                                </div>
-                                <div style={{
-                                    fontSize: '12px',
-                                    color: 'var(--text-secondary)',
-                                    fontWeight: '600',
-                                }}>
-                                    Peak
-                                </div>
-                            </div>
-
-                            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
-                                <div style={{
-                                    fontSize: '24px',
-                                    fontWeight: '700',
-                                    color: '#ef4444',
-                                    marginBottom: '4px',
-                                }}>
-                                    {trendData.min_score.toFixed(1)}
-                                </div>
-                                <div style={{
-                                    fontSize: '12px',
-                                    color: 'var(--text-secondary)',
-                                    fontWeight: '600',
-                                }}>
-                                    Lowest
-                                </div>
+                            <div className="glass-panel" style={{ padding: '20px', borderRadius: '20px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '24px', fontWeight: '800', color: '#ef4444', marginBottom: '4px' }}>{trendData.min_score.toFixed(0)}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600' }}>LOWEST SCORE</div>
                             </div>
                         </div>
 
-                        {/* Insights */}
-                        <div className="card" style={{ marginTop: 'var(--space-lg)' }}>
-                            <h3 style={{
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: 'var(--text-primary)',
-                                marginBottom: 'var(--space-sm)',
-                            }}>
-                                📊 Insights
+                        {/* AI Insights */}
+                        <div className="glass-panel" style={{ padding: '20px', borderRadius: '24px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6' }}>
+                                <BarChart3 size={18} /> AI Analysis
                             </h3>
-                            <ul style={{
-                                fontSize: '13px',
-                                color: 'var(--text-secondary)',
-                                lineHeight: '1.6',
-                                margin: 0,
-                                paddingLeft: '20px',
-                            }}>
-                                <li>Safety scores vary between day and night</li>
-                                <li>Trend is {trendData.trend_direction} over the past week</li>
-                                <li>Peak safety hours are typically during daytime</li>
+                            <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6' }}>
+                                <li>Safety scores show a <strong>{trendData.trend_direction}</strong> pattern over the last 7 days.</li>
+                                <li>
+                                    {trendData.trend_direction === 'improving'
+                                        ? "Recent data indicates a positive shift in safety metrics."
+                                        : trendData.trend_direction === 'declining'
+                                            ? "Increased activity suggests rising risks in this sector."
+                                            : "Safety levels have remained consistent with minor fluctuations."}
+                                </li>
+                                <li>
+                                    {trendData.average_score > 70
+                                        ? "This zone maintains high safety standards suitable for all-day travel."
+                                        : trendData.average_score > 40
+                                            ? "Exercise normal caution, especially during late night hours."
+                                            : "High alert: Avoid this zone at night if possible."}
+                                </li>
                             </ul>
                         </div>
-                    </>
+                    </div>
                 ) : (
-                    <div style={{
-                        textAlign: 'center',
-                        padding: 'var(--space-xl)',
-                        color: 'var(--text-secondary)',
-                    }}>
-                        Search for a location to view trends
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                        Search for a location to view detailed safety trends.
                     </div>
                 )}
             </div>

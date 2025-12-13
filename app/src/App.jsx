@@ -10,6 +10,7 @@ import EmergencyScreen from './screens/EmergencyScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import TrendsScreen from './screens/TrendsScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import AddLocationScreen from './screens/AddLocationScreen';
 import './index.css';
 
 function App() {
@@ -26,12 +27,13 @@ function App() {
                         }
                     />
                     <Route path="/onboarding" element={<OnboardingScreen />} />
-                    <Route path="/route" element={<SafeRouteScreen />} />
+                    <Route path="/safe-route" element={<SafeRouteScreen />} />
                     <Route path="/report" element={<ReportScreen />} />
                     <Route path="/feed" element={<FeedScreen />} />
                     <Route path="/emergency" element={<EmergencyScreen />} />
                     <Route path="/trends" element={<TrendsScreen />} />
                     <Route path="/settings" element={<SettingsScreen />} />
+                    <Route path="/add-location" element={<AddLocationScreen />} />
                 </Routes>
                 {onboardingComplete && <Navigation />}
             </PhoneFrame>

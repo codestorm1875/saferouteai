@@ -40,17 +40,20 @@ const PreferenceSelector = ({ value, onChange }) => {
                     <div
                         key={option.value}
                         onClick={() => onChange(option.value)}
-                        className="card"
+                        className="glass-panel"
                         style={{
                             padding: 'var(--space-md)',
                             cursor: 'pointer',
                             border: isSelected
-                                ? `2px solid ${option.color}`
-                                : '2px solid transparent',
+                                ? `1px solid ${option.color}`
+                                : '1px solid var(--bg-glass-border)',
                             background: isSelected
-                                ? `${option.color}15`
-                                : 'var(--card-bg)',
-                            transition: 'all 0.2s ease',
+                                ? `${option.color}10`
+                                : 'var(--bg-glass)',
+                            boxShadow: isSelected
+                                ? `0 0 15px ${option.color}20`
+                                : 'none',
+                            transition: 'all 0.3s ease',
                         }}
                     >
                         <div style={{
@@ -63,16 +66,17 @@ const PreferenceSelector = ({ value, onChange }) => {
                                     width: '48px',
                                     height: '48px',
                                     borderRadius: 'var(--radius-md)',
-                                    background: isSelected ? option.color : 'var(--border)',
+                                    background: isSelected ? `${option.color}20` : 'rgba(255, 255, 255, 0.05)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    transition: 'all 0.2s ease',
+                                    transition: 'all 0.3s ease',
+                                    border: isSelected ? `1px solid ${option.color}40` : 'none',
                                 }}
                             >
                                 <IconComponent
                                     size={24}
-                                    color={isSelected ? '#0f172a' : 'var(--text-secondary)'}
+                                    color={isSelected ? option.color : 'var(--text-muted)'}
                                 />
                             </div>
 
@@ -86,16 +90,17 @@ const PreferenceSelector = ({ value, onChange }) => {
                                     <h3 style={{
                                         fontSize: '16px',
                                         fontWeight: '600',
-                                        color: 'var(--text-primary)',
+                                        color: isSelected ? option.color : 'var(--text-primary)',
                                         margin: 0,
+                                        fontFamily: 'Outfit, sans-serif'
                                     }}>
                                         {option.label}
                                     </h3>
                                     {isSelected && (
                                         <div
                                             style={{
-                                                width: '8px',
-                                                height: '8px',
+                                                width: '6px',
+                                                height: '6px',
                                                 borderRadius: '50%',
                                                 background: option.color,
                                                 boxShadow: `0 0 8px ${option.color}`,
@@ -105,7 +110,7 @@ const PreferenceSelector = ({ value, onChange }) => {
                                 </div>
                                 <p style={{
                                     fontSize: '13px',
-                                    color: 'var(--text-secondary)',
+                                    color: 'var(--text-muted)',
                                     margin: 0,
                                 }}>
                                     {option.description}

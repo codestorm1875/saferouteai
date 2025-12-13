@@ -113,26 +113,39 @@ app.add_middleware(
 )
 
 # Initialize data on startup
+
+
 @app.on_event("startup")
 async def startup_event():
     db = next(get_db())
-    
-    # Check if data already exists
+
+    # Check if data already exists and has valid safety scores
     existing_zones = db.query(SafetyZone).count()
-    if existing_zones == 0:
+    zones_with_scores = db.query(SafetyZone).filter(
+        SafetyZone.safety_score > 0).count()
+
+    if existing_zones == 0 or zones_with_scores == 0:
         print("🔄 Generating initial data...")
+        # Clear any existing invalid data
+        if existing_zones > 0 and zones_with_scores == 0:
+            print("⚠️  Found zones with 0 safety scores, regenerating...")
+            db.query(SafetyZone).delete()
+            db.commit()
         db.close()  # Close before generate_all_data creates its own session
         generate_all_data()
     else:
-        print(f"✅ Database already has {existing_zones} zones")
+        print(
+            f"✅ Database already has {existing_zones} zones with valid scores")
         db.close()
-        
+
     # Start simulation automatically
     simulation_service.start()
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
     simulation_service.stop()
+
 
 @app.get(
     "/",
@@ -143,7 +156,7 @@ async def shutdown_event():
 async def root():
     """
     Returns API metadata and list of available endpoints.
-    
+
     This is the root endpoint that provides an overview of the API.
     """
     return {
@@ -161,6 +174,7 @@ async def root():
         }
     }
 
+
 @app.post(
     "/predict",
     response_model=SafetyPredictResponse,
@@ -174,7 +188,7 @@ async def predict_safety(
 ):
     """
     Calculate safety score for a given location.
-    
+
     The algorithm considers:
     - Traffic levels
     - Lighting conditions
@@ -182,9 +196,9 @@ async def predict_safety(
     - Weather conditions
     - Recent incidents nearby
     - Distance to nearest police station
-    
+
     Returns a score from 0-100 and risk level classification.
-    
+
     **Example Request:**
     ```json
     {
@@ -198,12 +212,12 @@ async def predict_safety(
     }
     ```
     """
-    
+
     # Count nearby incidents
     incidents_count = SafetyScoreEngine.count_nearby_incidents(
         db, request.latitude, request.longitude, radius_km=1.0
     )
-    
+
     # Calculate score
     score, risk_level, factors = SafetyScoreEngine.calculate_score(
         request.traffic,
@@ -213,12 +227,13 @@ async def predict_safety(
         incidents_count,
         request.police_distance
     )
-    
+
     return SafetyPredictResponse(
         score=score,
         risk_level=risk_level,
         factors=factors
     )
+
 
 @app.get(
     "/heatmap",
@@ -230,22 +245,23 @@ async def predict_safety(
 async def get_heatmap(db: Session = Depends(get_db)):
     """
     Get all safety zones across Lagos for heatmap visualization.
-    
+
     Returns a list of zones with:
     - Geographic coordinates (latitude, longitude)
     - Current safety score (0-100)
     - Zone radius in meters
     - Zone name
-    
+
     **Color Coding:**
     - Green (71-100): Safe zones
     - Yellow (31-70): Moderate risk zones
     - Red (0-30): Unsafe zones
-    
+
     """
-    
+
     zones = db.query(SafetyZone).all()
     return zones
+
 
 @app.post(
     "/incident",
@@ -261,7 +277,7 @@ async def report_incident(
 ):
     """
     Report a new safety incident.
-    
+
     **Incident Types:**
     - robbery
     - accident
@@ -270,12 +286,12 @@ async def report_incident(
     - suspicious_activity
     - assault
     - theft
-    
+
     **Severity Levels:**
     - low: Minor incident
     - medium: Moderate concern
     - high: Serious incident
-    
+
     **Example Request:**
     ```json
     {
@@ -286,10 +302,10 @@ async def report_incident(
         "severity": "high"
     }
     ```
-    
+
     The incident will immediately appear in the feed and affect nearby safety scores.
     """
-    
+
     db_incident = Incident(
         type=incident.type,
         description=incident.description,
@@ -299,16 +315,17 @@ async def report_incident(
         timestamp=datetime.utcnow(),
         user_id=incident.user_id
     )
-    
+
     db.add(db_incident)
-    
+
     # Update reporter's reputation (+10 points)
     if incident.user_id:
-        reporter = db.query(UserProfile).filter(UserProfile.user_id == incident.user_id).first()
+        reporter = db.query(UserProfile).filter(
+            UserProfile.user_id == incident.user_id).first()
         if reporter:
             reporter.total_reports += 1
             reporter.reputation_score += 10
-            
+
             # Check for badges
             if reporter.total_reports >= 5 and "Reporter" not in (reporter.badges or []):
                 badges = reporter.badges or []
@@ -324,11 +341,12 @@ async def report_incident(
                 badges=[]
             )
             db.add(new_reporter)
-    
+
     db.commit()
     db.refresh(db_incident)
-    
+
     return db_incident
+
 
 @app.get(
     "/incidents",
@@ -343,20 +361,21 @@ async def get_incidents(
 ):
     """
     Get recent safety incidents.
-    
+
     Returns incidents ordered by most recent first.
-    
+
     **Query Parameters:**
     - limit: Maximum number of incidents to return (default: 50)
-    
+
     Use this endpoint to populate the incident feed in real-time.
     """
-    
+
     incidents = db.query(Incident).order_by(
         Incident.timestamp.desc()
     ).limit(limit).all()
-    
+
     return incidents
+
 
 @app.post(
     "/sensor",
@@ -370,10 +389,10 @@ async def submit_sensor_data(
 ):
     """
     Submit IoT sensor data (simulated).
-    
+
     This endpoint simulates smart city IoT sensors that monitor
     street lighting conditions across Lagos.
-    
+
     **Example Request:**
     ```json
     {
@@ -383,13 +402,13 @@ async def submit_sensor_data(
         "brightness": 85.5
     }
     ```
-    
+
     **Brightness Scale:**
     - 0-30: Very dark
     - 31-60: Dim
     - 61-100: Well-lit
     """
-    
+
     db_sensor = SensorData(
         sensor_id=sensor.sensor_id,
         latitude=sensor.latitude,
@@ -397,14 +416,15 @@ async def submit_sensor_data(
         brightness=sensor.brightness,
         timestamp=datetime.utcnow()
     )
-    
+
     db.add(db_sensor)
     db.commit()
-    
+
     return {
         "status": "success",
         "message": f"Sensor data from {sensor.sensor_id} recorded"
     }
+
 
 @app.post(
     "/safe-route",
@@ -419,16 +439,16 @@ async def calculate_safe_route(
 ):
     """
     Calculate the safest route between two points.
-    
+
     Returns two routes:
     1. **Safe Route**: Optimized for safety (may be longer)
     2. **Fast Route**: Direct route (may pass through risky areas)
-    
+
     Each route includes:
     - Waypoints with coordinates
     - Average safety score
     - Recommendation
-    
+
     **Example Request:**
     ```json
     {
@@ -438,23 +458,23 @@ async def calculate_safe_route(
         "end_lng": 3.3947
     }
     ```
-    
+
     **Recommendation Logic:**
     - "safe": Safe route is significantly safer
     - "fast": Fast route is reasonably safe
     - "either": Both routes have similar safety levels
     """
-    
+
     # Get all zones
     zones = db.query(SafetyZone).all()
-    
+
     # Apply risk tolerance to route calculation
     # cautious: prioritize safety (lower traffic, better lighting)
     # balanced: equal weight (default)
     # fast: prioritize speed (accept higher traffic, lower lighting)
-    
+
     risk_tolerance = request.risk_tolerance.lower()
-    
+
     if risk_tolerance == "cautious":
         safe_traffic_range = (20, 40)
         safe_lighting_range = (70, 95)
@@ -476,20 +496,20 @@ async def calculate_safe_route(
         fast_traffic_range = (60, 90)
         fast_lighting_range = (40, 70)
         fast_police_range = (800, 2000)
-    
+
     # Simple route calculation (for demo purposes)
     # In production, you'd use actual routing algorithms
-    
+
     # Create waypoints along the route
     num_waypoints = 5
     safe_waypoints = []
     fast_waypoints = []
-    
+
     for i in range(num_waypoints + 1):
         t = i / num_waypoints
         lat = request.start_lat + t * (request.end_lat - request.start_lat)
         lng = request.start_lng + t * (request.end_lng - request.start_lng)
-        
+
         # For safe route, slightly deviate to safer areas
         if i > 0 and i < num_waypoints:
             # Find nearest safe zone
@@ -498,18 +518,20 @@ async def calculate_safe_route(
             deviation = 0.15 if risk_tolerance == "cautious" else 0.1
             lat += (best_zone.latitude - lat) * deviation
             lng += (best_zone.longitude - lng) * deviation
-        
+
         safe_waypoints.append({"lat": lat, "lng": lng})
-        
+
         # Fast route is direct
-        fast_lat = request.start_lat + t * (request.end_lat - request.start_lat)
-        fast_lng = request.start_lng + t * (request.end_lng - request.start_lng)
+        fast_lat = request.start_lat + t * \
+            (request.end_lat - request.start_lat)
+        fast_lng = request.start_lng + t * \
+            (request.end_lng - request.start_lng)
         fast_waypoints.append({"lat": fast_lat, "lng": fast_lng})
-    
+
     # Calculate average safety scores for both routes
     safe_scores = []
     fast_scores = []
-    
+
     for waypoint in safe_waypoints:
         incidents = SafetyScoreEngine.count_nearby_incidents(
             db, waypoint["lat"], waypoint["lng"], radius_km=0.5
@@ -523,7 +545,7 @@ async def calculate_safe_route(
             police_distance=random.uniform(*safe_police_range)
         )
         safe_scores.append(score)
-    
+
     for waypoint in fast_waypoints:
         incidents = SafetyScoreEngine.count_nearby_incidents(
             db, waypoint["lat"], waypoint["lng"], radius_km=0.5
@@ -537,10 +559,10 @@ async def calculate_safe_route(
             police_distance=random.uniform(*fast_police_range)
         )
         fast_scores.append(score)
-    
+
     avg_safe_score = sum(safe_scores) / len(safe_scores)
     avg_fast_score = sum(fast_scores) / len(fast_scores)
-    
+
     # Adjust recommendation based on risk tolerance
     if risk_tolerance == "cautious":
         recommendation = "safe" if avg_safe_score > avg_fast_score - 5 else "fast"
@@ -550,7 +572,7 @@ async def calculate_safe_route(
         recommendation = "safe" if avg_safe_score > avg_fast_score else "fast"
         if abs(avg_safe_score - avg_fast_score) < 10:
             recommendation = "either"
-    
+
     return RouteResponse(
         safe_route=safe_waypoints,
         fast_route=fast_waypoints,
@@ -558,6 +580,7 @@ async def calculate_safe_route(
         fast_score=round(avg_fast_score, 2),
         recommendation=recommendation
     )
+
 
 @app.get(
     "/trends/{zone_id}",
@@ -572,13 +595,13 @@ async def get_zone_trends(
 ):
     """
     Get historical safety trends for a zone.
-    
+
     Returns 7 days of safety data with:
     - Daily safety scores
     - Time of day variations (day/night)
     - Statistical summary (avg, min, max)
     - Trend direction
-    
+
     **Example Response:**
     ```json
     {
@@ -596,54 +619,61 @@ async def get_zone_trends(
     ```
     """
     from datetime import timedelta
-    
+
     # Get the zone
     zone = db.query(SafetyZone).filter(SafetyZone.id == zone_id).first()
     if not zone:
         raise HTTPException(status_code=404, detail="Zone not found")
-    
-    # Generate 7 days of historical data
+
+    # Use ML Engine to get trend prediction
+    prediction = ml_engine.predictor.predict_trend(zone, db)
+
+    # Generate historical data consistent with the prediction
     trends = []
     base_score = zone.safety_score
-    
+
+    # If trend is improving, history should be lower. If declining, history higher.
+    if prediction["trend_direction"] == "improving":
+        history_trend = -0.5  # History was worse
+    elif prediction["trend_direction"] == "declining":
+        history_trend = 0.5  # History was better
+    else:
+        history_trend = 0
+
     for i in range(7):
-        date = (datetime.utcnow() - timedelta(days=6-i)).strftime("%Y-%m-%d")
-        
-        # Day score (slightly higher)
-        day_variation = random.uniform(-5, 5)
-        day_score = max(0, min(100, base_score + day_variation))
+        # Calculate historical score based on trend
+        days_ago = 6 - i
+        historical_base = base_score + (days_ago * history_trend)
+
+        date = (datetime.utcnow() - timedelta(days=days_ago)
+                ).strftime("%Y-%m-%d")
+
+        # Day score
+        day_variation = random.uniform(-3, 3)
+        day_score = max(0, min(100, historical_base + 5 +
+                        day_variation))  # Day is safer
         trends.append(TrendDataPoint(
             date=date,
             safety_score=round(day_score, 1),
             time_of_day="day"
         ))
-        
-        # Night score (slightly lower)
-        night_variation = random.uniform(-15, -5)
-        night_score = max(0, min(100, base_score + night_variation))
+
+        # Night score
+        night_variation = random.uniform(-5, 5)
+        night_score = max(0, min(100, historical_base - 10 +
+                          night_variation))  # Night is less safe
         trends.append(TrendDataPoint(
             date=date,
             safety_score=round(night_score, 1),
             time_of_day="night"
         ))
-    
+
     # Calculate statistics
     all_scores = [t.safety_score for t in trends]
     avg_score = sum(all_scores) / len(all_scores)
     min_score = min(all_scores)
     max_score = max(all_scores)
-    
-    # Determine trend direction
-    first_half_avg = sum(all_scores[:7]) / 7
-    second_half_avg = sum(all_scores[7:]) / 7
-    
-    if second_half_avg > first_half_avg + 3:
-        trend_direction = "improving"
-    elif second_half_avg < first_half_avg - 3:
-        trend_direction = "declining"
-    else:
-        trend_direction = "stable"
-    
+
     return TrendsResponse(
         zone_id=zone.id,
         zone_name=zone.name,
@@ -651,8 +681,9 @@ async def get_zone_trends(
         average_score=round(avg_score, 1),
         min_score=round(min_score, 1),
         max_score=round(max_score, 1),
-        trend_direction=trend_direction
+        trend_direction=prediction["trend_direction"]
     )
+
 
 @app.get(
     "/zone-search",
@@ -667,23 +698,25 @@ async def search_zones(
 ):
     """
     Search for zones by name.
-    
+
     **Query Parameters:**
     - q: Search query (minimum 2 characters)
-    
+
     Returns matching zones with current safety scores.
-    
+
     **Example:**
     GET /zone-search?q=Lekki
     """
     if len(q) < 2:
-        raise HTTPException(status_code=400, detail="Query must be at least 2 characters")
-    
+        raise HTTPException(
+            status_code=400, detail="Query must be at least 2 characters")
+
     zones = db.query(SafetyZone).filter(
         SafetyZone.name.ilike(f"%{q}%")
     ).limit(10).all()
-    
+
     return zones
+
 
 @app.post(
     "/incident/{incident_id}/upvote",
@@ -699,11 +732,11 @@ async def upvote_incident(
 ):
     """
     Upvote an incident.
-    
+
     - Increments upvote count
     - Prevents duplicate upvotes from same user
     - Auto-verifies incident if upvotes >= 3
-    
+
     **Example Request:**
     ```json
     {
@@ -714,38 +747,41 @@ async def upvote_incident(
     incident = db.query(Incident).filter(Incident.id == incident_id).first()
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found")
-    
+
     # Check if user already upvoted
     upvoted_by = incident.upvoted_by if incident.upvoted_by else []
     if upvote_request.user_id in upvoted_by:
-        raise HTTPException(status_code=400, detail="Already upvoted this incident")
-    
+        raise HTTPException(
+            status_code=400, detail="Already upvoted this incident")
+
     # Add upvote
     upvoted_by.append(upvote_request.user_id)
     incident.upvoted_by = upvoted_by
     incident.upvotes += 1
-    
+
     # Auto-verify if upvotes >= 3
     if incident.upvotes >= 3:
         incident.verified = True
-    
+
     # Update author's reputation (+5 points)
     if incident.user_id:
-        author = db.query(UserProfile).filter(UserProfile.user_id == incident.user_id).first()
+        author = db.query(UserProfile).filter(
+            UserProfile.user_id == incident.user_id).first()
         if author:
             author.total_upvotes_received += 1
             author.reputation_score += 5
-            
+
             # Check for badges
             if author.total_upvotes_received >= 10 and "Trusted" not in (author.badges or []):
                 badges = author.badges or []
                 badges.append("Trusted")
                 author.badges = badges
-    
+
     db.commit()
     db.refresh(incident)
-    
+
     return incident
+
 
 @app.get(
     "/leaderboard",
@@ -760,12 +796,12 @@ async def get_leaderboard(
 ):
     """
     Get leaderboard of top contributors.
-    
+
     Returns users ranked by reputation score.
-    
+
     **Query Parameters:**
     - limit: Number of users to return (default: 10)
-    
+
     **Reputation Calculation:**
     - 10 points per incident report
     - 5 points per upvote received
@@ -773,7 +809,7 @@ async def get_leaderboard(
     users = db.query(UserProfile).order_by(
         UserProfile.reputation_score.desc()
     ).limit(limit).all()
-    
+
     leaderboard = []
     for rank, user in enumerate(users, start=1):
         leaderboard.append(LeaderboardEntry(
@@ -785,13 +821,14 @@ async def get_leaderboard(
             reputation_score=user.reputation_score,
             badges=user.badges if user.badges else []
         ))
-    
+
     total_users = db.query(UserProfile).count()
-    
+
     return LeaderboardResponse(
         leaderboard=leaderboard,
         total_users=total_users
     )
+
 
 @app.post(
     "/user/profile",
@@ -806,7 +843,7 @@ async def create_or_update_profile(
 ):
     """
     Create or update user profile.
-    
+
     **Example Request:**
     ```json
     {
@@ -818,13 +855,13 @@ async def create_or_update_profile(
     existing = db.query(UserProfile).filter(
         UserProfile.user_id == profile.user_id
     ).first()
-    
+
     if existing:
         existing.username = profile.username
         db.commit()
         db.refresh(existing)
         return existing
-    
+
     new_profile = UserProfile(
         user_id=profile.user_id,
         username=profile.username,
@@ -833,12 +870,13 @@ async def create_or_update_profile(
         reputation_score=0,
         badges=[]
     )
-    
+
     db.add(new_profile)
     db.commit()
     db.refresh(new_profile)
-    
+
     return new_profile
+
 
 @app.get(
     "/user/profile/{user_id}",
@@ -854,7 +892,8 @@ async def get_user_profile(
     """
     Get user profile by ID.
     """
-    profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+    profile = db.query(UserProfile).filter(
+        UserProfile.user_id == user_id).first()
     if not profile:
         # Return empty profile if not found
         return UserProfile(
@@ -866,6 +905,7 @@ async def get_user_profile(
             badges=[]
         )
     return profile
+
 
 @app.get(
     "/incidents/nearby",
@@ -883,23 +923,24 @@ async def get_nearby_incidents(
 ):
     """
     Get incidents near a location.
-    
+
     Returns incidents within specified radius.
     """
     incidents = db.query(Incident).all()
     nearby = []
-    
+
     for incident in incidents:
         dist = SafetyScoreEngine.haversine_distance(
             lat, lng, incident.latitude, incident.longitude
         )
         if dist <= radius_km:
             nearby.append(incident)
-            
+
     # Sort by timestamp (newest first)
     nearby.sort(key=lambda x: x.timestamp, reverse=True)
-    
+
     return nearby[:limit]
+
 
 @app.get(
     "/ml/danger-zones",
@@ -911,7 +952,7 @@ async def get_nearby_incidents(
 async def get_danger_zones(db: Session = Depends(get_db)):
     """
     Get AI-identified danger zones.
-    
+
     Uses K-Means clustering to group incidents and identify 
     high-density risk areas automatically.
     """
@@ -921,6 +962,7 @@ async def get_danger_zones(db: Session = Depends(get_db)):
         total_zones=len(zones),
         analysis_period_days=30
     )
+
 
 @app.get(
     "/ml/trends/{zone_id}",
@@ -935,16 +977,17 @@ async def predict_zone_trend(
 ):
     """
     Predict safety trend for a specific zone.
-    
+
     Uses Linear Regression on historical data to forecast
     safety scores 7 days into the future.
     """
     zone = db.query(SafetyZone).filter(SafetyZone.id == zone_id).first()
     if not zone:
         raise HTTPException(status_code=404, detail="Zone not found")
-        
+
     prediction = ml_engine.predictor.predict_trend(zone, db)
     return prediction
+
 
 @app.get(
     "/ml/anomalies",
@@ -956,7 +999,7 @@ async def predict_zone_trend(
 async def detect_anomalies(db: Session = Depends(get_db)):
     """
     Detect safety anomalies.
-    
+
     Uses Isolation Forest to identify unusual spikes in incident
     activity that deviate from normal patterns.
     """
@@ -966,6 +1009,7 @@ async def detect_anomalies(db: Session = Depends(get_db)):
         total_anomalies=len(anomalies),
         detection_period_days=7
     )
+
 
 @app.get(
     "/ml/insights",
@@ -977,13 +1021,14 @@ async def detect_anomalies(db: Session = Depends(get_db)):
 async def get_ml_insights(db: Session = Depends(get_db)):
     """
     Get comprehensive ML insights.
-    
+
     Combines results from:
     - K-Means Clustering (Danger Zones)
     - Isolation Forest (Anomalies)
     - Trend Analysis
     """
     return ml_engine.get_comprehensive_insights(db)
+
 
 @app.post(
     "/simulation/start",
@@ -995,6 +1040,7 @@ async def start_simulation():
     simulation_service.start()
     return {"status": "started", "message": "Real-time simulation started"}
 
+
 @app.post(
     "/simulation/stop",
     tags=["Simulation"],
@@ -1004,6 +1050,7 @@ async def start_simulation():
 async def stop_simulation():
     simulation_service.stop()
     return {"status": "stopped", "message": "Real-time simulation stopped"}
+
 
 @app.post(
     "/simulation/trigger",
@@ -1015,7 +1062,7 @@ async def trigger_simulation_incident():
     incident = simulation_service.trigger_incident()
     if incident:
         return {
-            "status": "success", 
+            "status": "success",
             "message": "Incident triggered",
             "incident": {
                 "type": incident.type,
@@ -1024,9 +1071,8 @@ async def trigger_simulation_incident():
             }
         }
     return {"status": "error", "message": "Could not trigger incident"}
-    
+
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

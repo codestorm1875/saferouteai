@@ -276,8 +276,10 @@ class MLEngine:
         danger_zones = self.clusterer.identify_danger_zones(db)
         anomalies = self.detector.detect_anomalies(db)
         
-        # Calculate overall safety trend
+        # Calculate overall safety trend and count danger zones matching heatmap
         zones = db.query(SafetyZone).all()
+        heatmap_danger_zones = 0
+        
         if zones:
             avg_score = sum(z.safety_score for z in zones) / len(zones)
             if avg_score >= 70:
@@ -286,14 +288,17 @@ class MLEngine:
                 overall_trend = "moderate"
             else:
                 overall_trend = "concerning"
+                
+            # Count zones that appear red on heatmap (score <= 30)
+            heatmap_danger_zones = sum(1 for z in zones if z.safety_score <= 30)
         else:
             overall_trend = "unknown"
         
         return {
-            "danger_zones": danger_zones[:3],  # Top 3 most dangerous
+            "danger_zones": danger_zones[:3],  # Top 3 most dangerous (K-Means)
             "anomalies": anomalies[:3],  # Top 3 anomalies
             "overall_trend": overall_trend,
-            "total_danger_zones": len(danger_zones),
+            "total_danger_zones": heatmap_danger_zones, # Match heatmap visual
             "total_anomalies": len(anomalies),
             "ml_enabled": True,
             "last_updated": datetime.utcnow().isoformat()
