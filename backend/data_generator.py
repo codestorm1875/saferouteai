@@ -108,7 +108,28 @@ INCIDENT_TYPES = [
     {"type": "phone_snatching", "severity": "high", "weight": 0.20},
     {"type": "harassment", "severity": "medium", "weight": 0.15},
     {"type": "accident", "severity": "medium", "weight": 0.10},
+    {"type": "police_extortion", "severity": "medium", "weight": 0.15},
+    {"type": "cult_clash", "severity": "high", "weight": 0.05},
+    {"type": "flooded_road", "severity": "medium", "weight": 0.10},
 ]
+
+# Specific landmarks for "Hyper-Local" realism
+LANDMARKS = {
+    "Ikoyi": ["Falomo Bridge", "Bourdillon Road", "Alexander Roundabout", "Golden Gate"],
+    "Victoria Island": ["Eko Hotel Roundabout", "1004 Estate Gate", "Ajose Adeogun", "Civic Center"],
+    "Lekki Phase 1": ["Admiralty Way Toll Gate", "Freedom Way", "Maroko Police Station", "Filmhouse"],
+    "Ikeja": ["Under Bridge", "Shoprite Entrance", "Allen Avenue Roundabout", "Alausa Secretariat"],
+    "Yaba": ["Tejuosho Market", "Unilag Main Gate", "Sabo Bus Stop", "Herbert Macaulay Way"],
+    "Surulere": ["National Stadium", "Ojuelegba Bridge", "Adeniran Ogunsanya", "Shitta Roundabout"],
+    "Oshodi": ["Terminal 1", "Under Bridge", "Charity Bus Stop", "Bolade"],
+    "Ojota": ["New Garage", "Chemical Market", "Pedestrian Bridge"],
+    "Third Mainland Bridge": ["Adeniji Adele Ramp", "Unilag Waterfront", "Oworo End"],
+    "Mushin": ["Idi Oro", "Palm Avenue", "Olosha Bus Stop"],
+    "Agege": ["Pen Cinema", "Guinness", "Capitol Road"],
+    "Apapa": ["Wharf Road", "Tincan Island", "Liverpool"],
+    "Computer Village": ["Otigba Street", "Medical Road", "Slot Head Office"],
+    "Balogun Market": ["Mandilas Building", "Broad Street", "Marina Car Park"],
+}
 
 
 def generate_safety_zones(db):
@@ -181,12 +202,18 @@ def generate_incidents(db):
         lat_offset = random.uniform(-0.005, 0.005)
         lng_offset = random.uniform(-0.005, 0.005)
 
+        # Select a landmark if available for this zone
+        landmark_text = ""
+        if zone.name in LANDMARKS:
+            landmark = random.choice(LANDMARKS[zone.name])
+            landmark_text = f" near {landmark}"
+
         incident = Incident(
             type=incident_type["type"],
             severity=incident_type["severity"],
             latitude=zone.latitude + lat_offset,
             longitude=zone.longitude + lng_offset,
-            description=f"{incident_type['type'].replace('_', ' ').title()} reported in {zone.name}",
+            description=f"{incident_type['type'].replace('_', ' ').title()} reported in {zone.name}{landmark_text}",
             timestamp=timestamp
         )
         incidents.append(incident)
