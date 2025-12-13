@@ -35,7 +35,7 @@ function App() {
                     <Route path="/settings" element={<SettingsScreen />} />
                     <Route path="/add-location" element={<AddLocationScreen />} />
                 </Routes>
-                {onboardingComplete && <Navigation />}
+                <Navigation />
             </PhoneFrame>
         </Router>
     );
