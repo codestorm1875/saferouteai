@@ -23,7 +23,7 @@ function App() {
                     <Route
                         path="/"
                         element={
-                            onboardingComplete ? <HomeScreen /> : <Navigate to="/onboarding" replace />
+                            <HomeScreen /> 
                         }
                     />
                     <Route path="/onboarding" element={<OnboardingScreen />} />
