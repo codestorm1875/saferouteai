@@ -2,12 +2,10 @@
 
 Real-time safety scoring and navigation system for Lagos, Nigeria.
 
-![SafeRouteAI](https://img.shields.io/badge/Hackathon-Ready-success)
 ![Backend](https://img.shields.io/badge/Backend-FastAPI-009688)
 ![Frontend](https://img.shields.io/badge/Frontend-React-61DAFB)
 ![SDG](https://img.shields.io/badge/UN%20SDG-11%20%26%2016-blue)
 ![Accessibility](https://img.shields.io/badge/WCAG-AA%20Compliant-green)
-![Validation](https://img.shields.io/badge/User%20Interest-87%25-orange)
 
 ## 🌍 UN Sustainable Development Goals
 
@@ -15,7 +13,6 @@ SafeRouteAI contributes to achieving the UN SDGs:
 - **SDG 11**: Sustainable Cities and Communities - Providing safe, accessible transport systems
 - **SDG 16**: Peace, Justice and Strong Institutions - Reducing violence and improving security
 
-[Read our full SDG Impact Report →](SDG_IMPACT.md)
 
 ## 🎯 Overview
 
