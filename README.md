@@ -26,22 +26,6 @@ SafeRouteAI helps users navigate Lagos safely by providing:
 - **Emergency features** for quick access to help
 - **AI-powered insights** with ML danger zone detection
 
-## 📚 Complete Documentation
-
-| Document | Description |
-|----------|-------------|
-| [QUICKSTART.md](QUICKSTART.md) | 5-minute setup guide + demo script |
-| [FEATURES.md](FEATURES.md) | Complete feature list |
-| [SDG_IMPACT.md](SDG_IMPACT.md) | UN SDG alignment & impact metrics |
-| [VALIDATION.md](VALIDATION.md) | **NEW** User survey: 87% would use SafeRouteAI |
-| [BUSINESS_MODEL.md](BUSINESS_MODEL.md) | **NEW** Revenue strategy & 3-year projections |
-| [FAQ.md](FAQ.md) | **NEW** Answers to judge questions |
-| [PRIVACY.md](PRIVACY.md) | **NEW** NDPR compliance & data protection |
-| [SCALABILITY.md](SCALABILITY.md) | **NEW** Production architecture (1M+ users) |
-| [ACCESSIBILITY.md](ACCESSIBILITY.md) | **NEW** WCAG 2.1 AA compliance |
-| [design.md](design.md) | Cyberpunk design system |
-| [INTEGRATION_TEST.md](INTEGRATION_TEST.md) | Test results (all passing) |
-
 ## 🏗️ Architecture
 
 ### Backend (FastAPI)
@@ -215,10 +199,8 @@ npm run build
 
 MIT License - Built for hackathon purposes
 
-## 👥 Team
+##
 
 Built with ❤️ for Lagos safety
 
 ---
-
-**Demo Ready** ✅ | **20 Hour Build** ⏱️ | **Community Impact** 🌍
